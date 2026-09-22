@@ -78,7 +78,7 @@ export function chunkBlocks(blocks: Block[]): Chunk[] {
     const sentences = block.text.match(/[^.!?]+[.!?]*\s*/g) ?? [block.text];
     for (const sentence of sentences) {
       if (current.length + sentence.length > TARGET_CHARS && current.length >= MIN_CHARS) {
-        const heading = current.heading;
+        const heading: string | null = current.heading;
         flush();
         current = { heading, page: block.page, parts: [], length: 0 };
       }

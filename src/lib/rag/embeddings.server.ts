@@ -8,7 +8,7 @@ function meanPool(value: number[] | number[][]): number[] {
   const tokens = value as number[][];
   const dim = tokens[0]!.length;
   const out = new Array<number>(dim).fill(0);
-  for (const t of tokens) for (let i = 0; i < dim; i++) out[i] += t[i]!;
+  for (const t of tokens) for (let i = 0; i < dim; i++) out[i] = (out[i] ?? 0) + (t[i] ?? 0);
   return out.map((v) => v / tokens.length);
 }
 
