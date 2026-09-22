@@ -14,7 +14,181 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      citations: {
+        Row: {
+          chunk_id: string
+          citation_index: number
+          created_at: string
+          id: string
+          message_id: string
+          relevance_score: number | null
+        }
+        Insert: {
+          chunk_id: string
+          citation_index?: number
+          created_at?: string
+          id?: string
+          message_id: string
+          relevance_score?: number | null
+        }
+        Update: {
+          chunk_id?: string
+          citation_index?: number
+          created_at?: string
+          id?: string
+          message_id?: string
+          relevance_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "citations_chunk_id_fkey"
+            columns: ["chunk_id"]
+            isOneToOne: false
+            referencedRelation: "document_chunks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "citations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          document_id: string
+          flagged_injection: boolean
+          id: string
+          page_number: number | null
+          qdrant_point_id: string | null
+          section_heading: string | null
+        }
+        Insert: {
+          chunk_index?: number
+          content: string
+          created_at?: string
+          document_id: string
+          flagged_injection?: boolean
+          id?: string
+          page_number?: number | null
+          qdrant_point_id?: string | null
+          section_heading?: string | null
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          document_id?: string
+          flagged_injection?: boolean
+          id?: string
+          page_number?: number | null
+          qdrant_point_id?: string | null
+          section_heading?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          chunk_count: number
+          created_at: string
+          error_message: string | null
+          id: string
+          page_count: number | null
+          status: Database["public"]["Enums"]["document_status"]
+          storage_path: string
+          title: string
+          uploaded_by: string
+        }
+        Insert: {
+          chunk_count?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          page_count?: number | null
+          status?: Database["public"]["Enums"]["document_status"]
+          storage_path: string
+          title: string
+          uploaded_by: string
+        }
+        Update: {
+          chunk_count?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          page_count?: number | null
+          status?: Database["public"]["Enums"]["document_status"]
+          storage_path?: string
+          title?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["message_role"]
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["message_role"]
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["message_role"]
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +197,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      document_status: "processing" | "ready" | "failed"
+      message_role: "user" | "assistant"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +325,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      document_status: ["processing", "ready", "failed"],
+      message_role: ["user", "assistant"],
+    },
   },
 } as const
