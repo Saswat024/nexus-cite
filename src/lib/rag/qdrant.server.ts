@@ -95,7 +95,7 @@ export async function hybridSearch(args: {
   denseVector: number[];
   queryText: string;
   userId: string;
-  documentIds?: string[];
+  documentIds?: string[] | undefined;
   limit?: number;
 }): Promise<HybridHit[]> {
   await ensureCollection();
