@@ -99,11 +99,20 @@ export const Route = createFileRoute("/api/chat")({
             );
           }
 
-          const ranked = await rerank(
-            question,
-            hits.map((h) => h.payload.content),
-            5,
-          );
+          // Reranking is a quality boost, not a hard dependency: if the reranker
+          // endpoint is unreachable or misconfigured, fall back to fused RRF order.
+          let ranked: { index: number; score: number }[];
+          try {
+            ranked = await rerank(
+              question,
+              hits.map((h) => h.payload.content),
+              5,
+            );
+          } catch (rerankError) {
+            console.error("Reranker unavailable, falling back to RRF order", rerankError);
+            ranked = hits.slice(0, 5).map((h, index) => ({ index, score: h.score }));
+          }
+
 
           const top = ranked
             .map((r, i) => {
@@ -171,8 +180,9 @@ export const Route = createFileRoute("/api/chat")({
 
                 if (assistantMessage) {
                   const used = new Set(
-                    [...answer.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1])),
+                    [...answer.matchAll(/[[【［]\s*(\d+)\s*[\]】］]/g)].map((m) => Number(m[1])),
                   );
+
                   const rows = citationMeta
                     .filter((c) => used.size === 0 || used.has(c.index))
                     .map((c) => ({
