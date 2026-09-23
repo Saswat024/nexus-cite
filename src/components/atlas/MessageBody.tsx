@@ -10,16 +10,26 @@ export function MessageBody({
   citations: CitationMeta[];
   onCitationClick: (citation: CitationMeta) => void;
 }) {
-  const parts = content.split(/(\[\d+\])/g);
+  // Models occasionally emit full-width 【n】 markers; normalise them to [n].
+  const normalised = content.replace(/[【［]\s*(\d+)\s*[】］]/g, "[$1]");
+  const parts = normalised.split(/(\[\d+\]|\*\*[^*]+\*\*)/g);
 
   return (
     <div className="text-sm leading-relaxed whitespace-pre-wrap">
       {parts.map((part, i) => {
+        const bold = part.match(/^\*\*([^*]+)\*\*$/);
+        if (bold)
+          return (
+            <strong key={i} className="font-semibold text-foreground">
+              {bold[1]}
+            </strong>
+          );
         const match = part.match(/^\[(\d+)\]$/);
         if (!match) return <span key={i}>{part}</span>;
         const index = Number(match[1]);
         const citation = citations.find((c) => c.index === index);
         if (!citation) return <span key={i}>{part}</span>;
+
         return (
           <button
             key={i}
