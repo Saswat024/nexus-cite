@@ -180,7 +180,7 @@ export const Route = createFileRoute("/api/chat")({
 
                 if (assistantMessage) {
                   const used = new Set(
-                    [...answer.matchAll(/[[【［]\s*(\d+)\s*[\]】］]/g)].map((m) => Number(m[1])),
+                    [...answer.matchAll(/[[【［]\s*(\d+)(?:†[^\]】］]*)?\s*[\]】］]/g)].map((m) => Number(m[1])),
                   );
 
                   const rows = citationMeta
