@@ -11,7 +11,7 @@ export function MessageBody({
   onCitationClick: (citation: CitationMeta) => void;
 }) {
   // Models occasionally emit full-width 【n】 markers; normalise them to [n].
-  const normalised = content.replace(/[【［]\s*(\d+)\s*[】］]/g, "[$1]");
+  const normalised = content.replace(/[【［]\s*(\d+)(?:†[^\】］]*)?\s*[】］]/g, "[$1]");
   const parts = normalised.split(/(\[\d+\]|\*\*[^*]+\*\*)/g);
 
   return (
