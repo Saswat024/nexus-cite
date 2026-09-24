@@ -170,3 +170,85 @@ async def generate_title_async(query: str, context_snippet: Optional[str] = None
 
     return fallback
 
+
+async def condense_query_async(
+    question: str,
+    history: list[ChatMessage] | list[dict] | None = None,
+) -> str:
+    """
+    Rewrites a conversational follow-up question containing pronouns or references
+    into a standalone search query using chat history.
+    Example:
+      History: "who is avery lancaster"
+      Follow-up: "show his compensation history"
+      Output: "Avery Lancaster compensation history"
+    """
+    if not history:
+        return question
+
+    key = os.environ.get("GROQ_API_KEY")
+    if not key:
+        return question
+
+    base_url = os.environ.get("GROQ_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
+    url = f"{base_url}/chat/completions"
+
+    # Take the last 4 conversation messages for context
+    recent_history = history[-4:]
+    history_lines: list[str] = []
+    for m in recent_history:
+        role = m.role if isinstance(m, ChatMessage) else m.get("role", "")
+        content = m.content if isinstance(m, ChatMessage) else m.get("content", "")
+        if role and content:
+            # Truncate long assistant messages to keep prompt fast
+            clean_content = content[:300].strip()
+            history_lines.append(f"{role.capitalize()}: {clean_content}")
+
+    if not history_lines:
+        return question
+
+    history_text = "\n".join(history_lines)
+
+    system_prompt = (
+        "You are an expert search query rewriter. Given the conversation history and a user's follow-up question, "
+        "rewrite the question into a concise standalone search query that replaces pronouns (he, him, his, "
+        "she, her, hers, it, its, they, them, their, this, that, etc.) with explicit entity names from history. "
+        "If the question is already fully standalone and contains all necessary entity names, return it as-is. "
+        "Do NOT answer the question. Return ONLY the standalone search query without quotes, prefixes, or punctuation."
+    )
+
+    user_prompt = f"Chat History:\n{history_text}\n\nUser Question: {question}"
+
+    try:
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            res = await client.post(
+                url,
+                headers={
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "qwen/qwen3.8-27b",
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    "max_tokens": 50,
+                    "temperature": 0.0,
+                },
+            )
+            if res.status_code == 200:
+                data = res.json()
+                choices = data.get("choices", [])
+                if choices:
+                    rewritten = choices[0].get("message", {}).get("content", "").strip()
+                    clean = rewritten.strip('"\'`*#').strip()
+                    if clean.lower().startswith("search query:"):
+                        clean = clean[13:].strip()
+                    if clean:
+                        return clean
+    except Exception as e:
+        print(f"Query condensation fallback due to error: {e}")
+
+    return question
+

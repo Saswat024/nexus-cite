@@ -48,6 +48,7 @@ from groq import (
     build_context_block,
     stream_groq_answer,
     generate_title_async,
+    condense_query_async,
 )
 
 
@@ -243,10 +244,17 @@ class ChatRequest(BaseModel):
 
 @app.post("/api/rag/chat/stream")
 async def api_chat_stream(req: ChatRequest):
-    dense_vec = await embed_query_async(req.question)
+    # Contextual Query Condensation: rewrite follow-up questions containing pronouns (he, his, etc.)
+    search_query = req.question
+    if req.history:
+        search_query = await condense_query_async(req.question, req.history)
+        if search_query != req.question:
+            print(f"[RAG Retrieval] Rewrote query '{req.question}' -> '{search_query}'")
+
+    dense_vec = await embed_query_async(search_query)
     hits = await hybrid_search_async(
         dense_vector=dense_vec,
-        query_text=req.question,
+        query_text=search_query,
         user_id=req.user_id,
         document_ids=req.document_ids,
         limit=20,
@@ -263,7 +271,7 @@ async def api_chat_stream(req: ChatRequest):
 
     try:
         ranked = await rerank_async(
-            query=req.question,
+            query=search_query,
             documents=[h.payload.content for h in hits],
             top_n=5,
         )
