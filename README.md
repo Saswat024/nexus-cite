@@ -1,122 +1,59 @@
-# Research Compass
+# Atlas — Grounded Research Assistant
 
-I'm building a production-grade RAG research assistant — chat over a large corpus
+Atlas is a retrieval-augmented research assistant designed for querying academic papers, documentation, and research corpora with hybrid retrieval, BGE reranking, and citation grounding.
 
-(research papers / course material) with grounded, cited answers. Build it to this
+## Project Structure
 
-spec exactly; this needs to read as production infrastructure, not a PDF-chatbot demo.
+The project is decoupled into independent backend and frontend services:
 
-##Stack
+```
+RAG/
+├── backend/                  # Python FastAPI RAG Microservice
+│   ├── server.py             # FastAPI REST and Streaming endpoints
+│   ├── embeddings.py         # Qwen/Qwen3-Embedding-8B (Scaleway) & BM25 sparse vectors
+│   ├── chunking.py           # Section-aware chunking & prompt-injection defense
+│   ├── qdrant.py             # Qdrant Cloud hybrid search (Dense + Lexical Sparse with RRF)
+│   ├── rerank.py             # BAAI BGE Reranker v2 M3
+│   ├── groq.py               # Groq LLM streaming with strict citation grounding
+│   ├── mongo.py              # MongoDB Atlas & GridFS storage operations
+│   ├── parse.py              # PDF (PyMuPDF) and DOCX extraction
+│   ├── requirements.txt      # Python dependencies
+│   ├── test_github_pdf_rag.py# Comprehensive RAG pipeline test suite
+│   └── GitHub.pdf            # Sample test document
+│
+└── frontend/                 # TanStack Start & React 19 Web Application
+    ├── src/
+    │   ├── components/       # Atlas UI (ChatPanel, DocumentLibrary, SourceSheet)
+    │   ├── routes/           # File-based routes (/auth, /workspace, /api/chat)
+    │   ├── lib/              # Client functions, types, and backend RAG connector
+    │   └── integrations/     # Native MongoDB authentication and operations
+    ├── package.json          # Node dependencies and scripts
+    └── vite.config.ts        # Vite + TanStack Start configuration
+```
 
-- Frontend: React + Vite + TypeScript + Tailwind + shadcn/ui
+## Quick Start
 
-- Backend: Supabase (Lovable Cloud) — Postgres, Auth (email + Google OAuth), Storage
-for raw file uploads, Edge Functions (Deno/TS) for ALL server-side orchestration
+### 1. Start the Backend (FastAPI RAG Engine)
+```bash
+cd backend
+pip install -r requirements.txt
+python -m uvicorn server:app --port 8000 --reload
+```
+- Health Check: `http://127.0.0.1:8000/health`
+- Interactive API Docs: `http://127.0.0.1:8000/docs`
 
-- Vector + hybrid search: Qdrant Cloud, called via REST from an Edge Function
-(I'll provide QDRANT_URL and QDRANT_API_KEY as secrets) — use Qdrant's native
-hybrid query (dense + sparse/BM25) with RRF fusion, not a single dense pass
-
-- Reranker: BAAI BGE Reranker v2 M3, using an open-source/self-hosted deployment
-and called via REST from the same Edge Function
-
-- Generation: GPT-OSS via Groq, called via REST from the same Edge Function
-(I'll provide GROQ_API_KEY as a secret)
-
-- No API key or secret is ever referenced from client code — everything routes
-through Edge Functions
-
-## Data model (Postgres)
-
-- documents: id, title, storage_path, uploaded_by, status (processing/ready/failed), created_at
-
-- document_chunks: id, document_id fk, content, page_number, section_heading,
-
-  qdrant_point_id, created_at
-
-- chat_sessions: id, user_id, title, created_at
-
-- messages: id, session_id, role, content, created_at
-
-- citations: id, message_id, chunk_id, relevance_score
-
-## Flow 1 — Ingestion
-
-1. User uploads a PDF/DOCX from the sidebar → stored in Supabase Storage
-
-2. An Edge Function parses it, preserving page numbers and section headers, and
-
-   splits it into chunks along natural section boundaries — not blind fixed-size
-
-   windows
-
-3. Embeds each chunk, upserts into Qdrant with payload {document_id, chunk_id,
-
-   page_number, section_heading}, inserts a matching row into document_chunks
-
-4. Flips documents.status to "ready"; UI shows a processing indicator until then
-
-## Flow 2 — Query
-
-1. User asks a question in the chat panel
-
-2. Edge Function: embeds the query → Qdrant hybrid search with RRF fusion,
-
-   top ~20 → Cohere rerank → keep top 5
-
-3. Builds a context block from those 5 chunks, each tagged with a citation index
-
-4. Calls the generation model with a strict system prompt: answer ONLY from the
-
-   given context, cite every claim as [1] [2] etc., and if the context doesn't
-
-   support an answer, say so explicitly instead of filling the gap from general
-
-   knowledge
-
-5. Streams the response back; stores the assistant message and citation rows
-
-## UI
-
-- Left sidebar: document library — upload button, list with status badges
-
-- Main panel: chat interface; citations render as inline numbered chips; clicking
-
-  one opens a side panel showing the exact source chunk highlighted, with a
-
-  jump-to-document link
-
-- Clean modern SaaS look, dark mode, loading skeletons during ingestion/streaming
-
-## Security
-
-- RLS so a user only ever sees their own documents and chats
-
-- Sanitize/flag any instruction-like text found inside ingested documents before
-
-  it reaches the context window (basic prompt-injection defense on ingestion)
-
-Start with the schema, the ingestion Edge Function, and the query Edge Function,
-
-then wire the chat UI to real data. Ask me for each secret as you need it.
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/70201093-2d93-4ab5-bbc9-066f328ad8f7).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+### 2. Start the Frontend (Atlas Web App)
+```bash
+cd frontend
+npm install
 npm run dev
 ```
+- Web Application: `http://localhost:8080/`
+
+## Key Capabilities
+- **Dense Embeddings**: `Qwen/Qwen3-Embedding-8B` (4096 dimensions via Scaleway provider).
+- **Lexical Sparse Vectors**: Exact BM25 term-frequency vectors fused with dense vectors using Reciprocal Rank Fusion (RRF).
+- **Reranker**: BAAI BGE Reranker v2 M3 for relevance sorting.
+- **Strict Grounding**: Citations extracted directly from verified document chunks and displayed with inline badges.
+- **Native MongoDB Storage**: Documents and files saved directly into MongoDB Atlas GridFS; sessions and messages persisted in MongoDB collections.
+- **Zero Email Verification**: Instant account creation and sign-in.
