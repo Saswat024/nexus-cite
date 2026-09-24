@@ -75,13 +75,21 @@ export function DocumentLibrary({
   });
 
   const handleUploadFiles = async (files: FileList | File[]) => {
-    const fileArray = Array.from(files).filter((f) =>
+    const MAX_BATCH_SIZE = 10;
+    let fileArray = Array.from(files).filter((f) =>
       /\.(pdf|docx|md|markdown|txt)$/i.test(f.name)
     );
 
     if (fileArray.length === 0) {
       toast.error("Please select valid documents (.pdf, .docx, .md, .txt)");
       return;
+    }
+
+    if (fileArray.length > MAX_BATCH_SIZE) {
+      toast.warning(
+        `Batch limit is ${MAX_BATCH_SIZE} files to avoid AI rate limits. Indexing first ${MAX_BATCH_SIZE} files (${fileArray.length - MAX_BATCH_SIZE} remaining).`
+      );
+      fileArray = fileArray.slice(0, MAX_BATCH_SIZE);
     }
 
     setUploading(true);
@@ -98,7 +106,7 @@ export function DocumentLibrary({
 
       try {
         if (fileArray.length > 1) {
-          toast.info(`Uploading ${i + 1} of ${fileArray.length}: ${file.name}…`);
+          toast.info(`Indexing ${i + 1} of ${fileArray.length}: ${file.name}…`);
         } else {
           toast.info(`Uploading ${file.name} to MongoDB & indexing with Python…`);
         }
@@ -124,6 +132,11 @@ export function DocumentLibrary({
 
         successCount++;
         await queryClient.invalidateQueries({ queryKey: ["documents"] });
+
+        // Gentle 500ms breather between files to protect against Scaleway/HuggingFace burst throttling
+        if (i < fileArray.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
       } catch (error) {
         failCount++;
         console.error(`Failed to ingest ${file.name}:`, error);
@@ -205,6 +218,10 @@ export function DocumentLibrary({
             </>
           )}
         </Button>
+
+        <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
+          Batch limit: up to 10 files at a time (.pdf, .docx, .md)
+        </p>
 
         {isDragging && (
           <p className="mt-2 text-center text-xs text-primary font-medium animate-pulse">

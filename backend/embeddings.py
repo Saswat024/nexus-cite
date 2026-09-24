@@ -9,6 +9,7 @@ import os
 import math
 import re
 import ctypes
+import asyncio
 from typing import TypedDict
 import numpy as np
 from huggingface_hub import InferenceClient, AsyncInferenceClient
@@ -49,7 +50,7 @@ def normalize(vec: list[float]) -> list[float]:
 
 
 async def embed_texts_async(texts: list[str]) -> list[list[float]]:
-    """Embed texts with Qwen/Qwen3-Embedding-8B through Hugging Face AsyncInferenceClient."""
+    """Embed texts with Qwen/Qwen3-Embedding-8B through Hugging Face AsyncInferenceClient with auto-retry."""
     if not texts:
         return []
 
@@ -59,7 +60,20 @@ async def embed_texts_async(texts: list[str]) -> list[list[float]]:
 
     for i in range(0, len(texts), batch_size):
         batch = [t[:4000] for t in texts[i : i + batch_size]]
-        res = await client.feature_extraction(batch, model=HF_MODEL)
+        res = None
+        last_error = None
+
+        for attempt in range(3):
+            try:
+                res = await client.feature_extraction(batch, model=HF_MODEL)
+                break
+            except Exception as e:
+                last_error = e
+                if attempt < 2:
+                    await asyncio.sleep(1.0 * (attempt + 1))
+                else:
+                    raise last_error
+
         arr = np.array(res)
         if arr.ndim == 1:
             arr = arr.reshape(1, -1)
