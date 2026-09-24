@@ -192,7 +192,14 @@ export const Route = createFileRoute("/api/chat")({
                       relevance_score: c.relevance_score,
                     }));
                   if (rows.length) {
-                    const { error: citationError } = await supabase.from("citations").insert(rows);
+                    // The FK check on citations.chunk_id runs outside the user's
+                    // request context, so the RLS-protected chunk row is invisible
+                    // to it. The caller is already authenticated and every chunk
+                    // came from their own search, so persist via the server client.
+                    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+                    const { error: citationError } = await supabaseAdmin
+                      .from("citations")
+                      .insert(rows);
                     if (citationError) console.error("Failed to store citations", citationError);
                   }
                 }
