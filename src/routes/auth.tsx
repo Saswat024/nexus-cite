@@ -35,6 +35,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -45,6 +46,7 @@ function AuthPage() {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setBusy(true);
+    setErrorMsg(null);
     try {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
@@ -63,7 +65,16 @@ function AuthPage() {
       }
       navigate({ to: "/workspace" });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Authentication failed");
+      const raw = error instanceof Error ? error.message : "Authentication failed";
+      const msg = /invalid login credentials/i.test(raw)
+        ? "Wrong email or password — or this account doesn't exist yet. Create one first."
+        : /weak/i.test(raw)
+          ? "That password is too common. Please choose a stronger one."
+          : /email not confirmed/i.test(raw)
+            ? "Please confirm your email first — check your inbox."
+            : raw;
+      setErrorMsg(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -130,6 +141,11 @@ function AuthPage() {
                 placeholder="••••••••"
               />
             </div>
+            {errorMsg && (
+              <p role="alert" className="text-sm text-destructive">
+                {errorMsg}
+              </p>
+            )}
             <Button type="submit" className="w-full" disabled={busy}>
               {busy && <Loader2 className="size-4 animate-spin" />}
               {mode === "signin" ? "Sign in" : "Create account"}
