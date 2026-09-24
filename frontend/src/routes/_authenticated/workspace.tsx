@@ -59,6 +59,23 @@ function Workspace() {
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [citation, setCitation] = useState<CitationMeta | null>(null);
   const [highlightedDoc, setHighlightedDoc] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 1024;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== "undefined" && window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const [generatingSessionId, setGeneratingSessionId] = useState<string | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
@@ -83,8 +100,18 @@ function Workspace() {
       const data = await createNewSession({ data: { title: "New conversation" } });
       await queryClient.invalidateQueries({ queryKey: ["sessions"] });
       setSessionId(data.id);
+      if (typeof window !== "undefined" && window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
     } catch {
       toast.error("Could not start a conversation");
+    }
+  };
+
+  const handleSelectSession = (id: string) => {
+    setSessionId(id);
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setSidebarOpen(false);
     }
   };
 
@@ -159,8 +186,23 @@ function Workspace() {
   const currentSession = sessions?.find((s) => s.id === sessionId);
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <aside className="flex w-80 shrink-0 flex-col border-r border-border bg-sidebar">
+    <div className="relative flex h-screen w-full max-w-full min-w-0 overflow-hidden">
+      {/* Mobile / Tablet overlay backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Responsive Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 sm:w-80 flex-col border-r border-border bg-sidebar transition-all duration-300 ease-in-out lg:static lg:z-auto ${
+          sidebarOpen
+            ? "translate-x-0 lg:w-80 lg:shrink-0"
+            : "-translate-x-full lg:w-0 lg:overflow-hidden lg:border-r-0"
+        }`}
+      >
         <div className="flex items-center gap-2.5 border-b border-border px-4 py-3.5">
           <div className="flex size-8 items-center justify-center rounded-md bg-primary/15 text-primary ring-1 ring-primary/30">
             <Library className="size-4" />
@@ -171,9 +213,19 @@ function Workspace() {
           </div>
           <button
             type="button"
+            aria-label="Close sidebar"
+            onClick={() => setSidebarOpen(false)}
+            className="rounded p-1.5 text-muted-foreground hover:text-foreground lg:hidden"
+            title="Close sidebar"
+          >
+            <X className="size-4" />
+          </button>
+          <button
+            type="button"
             aria-label="Sign out"
             onClick={signOut}
             className="rounded p-1.5 text-muted-foreground hover:text-foreground"
+            title="Sign out"
           >
             <LogOut className="size-4" />
           </button>
@@ -209,7 +261,7 @@ function Workspace() {
               {sessions?.map((session) => (
                 <div
                   key={session.id}
-                  onClick={() => setSessionId(session.id)}
+                  onClick={() => handleSelectSession(session.id)}
                   className={`group relative flex items-center justify-between gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-colors cursor-pointer ${
                     sessionId === session.id
                       ? "bg-primary/10 text-primary font-medium"
@@ -298,11 +350,13 @@ function Workspace() {
         </div>
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col">
+      <main className="flex min-w-0 max-w-full w-full flex-1 flex-col overflow-hidden">
         <ChatPanel
           sessionId={sessionId}
           sessionTitle={currentSession?.title ?? null}
           documentIds={selectedDocs}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
           onCitationClick={setCitation}
           onDeleteSession={handleDeleteSession}
           onGenerateTitle={handleGenerateTitle}
@@ -326,4 +380,5 @@ function Workspace() {
       />
     </div>
   );
+
 }

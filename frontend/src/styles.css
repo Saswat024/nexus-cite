@@ -109,9 +109,14 @@
 
   html {
     color-scheme: dark;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 
   body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
@@ -164,3 +169,17 @@
   background-color: var(--color-primary);
   color: var(--color-primary-foreground);
 }
+
+/* Ensure Radix ScrollArea internal table-wrapper does not blow out parent flex containers on mobile */
+[data-radix-scroll-area-viewport] {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+[data-radix-scroll-area-viewport] > div {
+  display: block !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+

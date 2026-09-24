@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ArrowUp, Loader2, Quote, Square, Sparkles, Trash2, Pencil, Check, X } from "lucide-react";
+import { ArrowUp, Loader2, Quote, Square, Sparkles, Trash2, Pencil, Check, X, PanelLeft, PanelLeftClose } from "lucide-react";
 import { MessageBody } from "./MessageBody";
 import type { ChatMessage, CitationMeta } from "@/lib/atlas-types";
 
@@ -16,6 +16,8 @@ type Props = {
   sessionId: string | null;
   sessionTitle?: string | null;
   documentIds: string[];
+  sidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
   onCitationClick: (citation: CitationMeta) => void;
   onDeleteSession?: (sessionId: string) => void;
   onGenerateTitle?: (sessionId: string) => void;
@@ -26,6 +28,8 @@ export function ChatPanel({
   sessionId,
   sessionTitle,
   documentIds,
+  sidebarOpen,
+  onToggleSidebar,
   onCitationClick,
   onDeleteSession,
   onGenerateTitle,
@@ -180,12 +184,24 @@ export function ChatPanel({
   ];
 
   return (
-    <div className="flex h-full flex-col">
-      {sessionId && (
-        <div className="flex items-center justify-between border-b border-border bg-sidebar/40 px-6 py-2.5 backdrop-blur-sm">
-          <div className="flex items-center gap-2 min-w-0">
+    <div className="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden">
+      {sessionId ? (
+        <div className="flex w-full min-w-0 max-w-full items-center justify-between border-b border-border bg-sidebar/40 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-sm gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 overflow-hidden">
+            {onToggleSidebar && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onToggleSidebar}
+                className="size-8 text-muted-foreground hover:text-foreground shrink-0"
+                title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+              >
+                {sidebarOpen ? <PanelLeftClose className="size-4" /> : <PanelLeft className="size-4" />}
+              </Button>
+            )}
+
             {isEditingTitle ? (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-1 min-w-0">
                 <input
                   type="text"
                   value={tempTitle}
@@ -195,7 +211,7 @@ export function ChatPanel({
                     if (e.key === "Escape") setIsEditingTitle(false);
                   }}
                   autoFocus
-                  className="rounded border border-primary/40 bg-secondary/80 px-2 py-0.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full max-w-xs rounded border border-primary/40 bg-secondary/80 px-2 py-0.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 <button
                   type="button"
@@ -215,8 +231,8 @@ export function ChatPanel({
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="truncate font-display text-sm font-semibold text-foreground max-w-sm sm:max-w-md">
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <span className="truncate font-display text-xs sm:text-sm font-semibold text-foreground">
                   {sessionTitle || "Conversation"}
                 </span>
                 {onRenameSession && (
@@ -226,7 +242,7 @@ export function ChatPanel({
                       setTempTitle(sessionTitle || "");
                       setIsEditingTitle(true);
                     }}
-                    className="rounded p-1 text-muted-foreground hover:text-foreground transition-colors"
+                    className="rounded p-1 text-muted-foreground hover:text-foreground transition-colors shrink-0"
                     title="Rename conversation"
                   >
                     <Pencil className="size-3" />
@@ -236,13 +252,13 @@ export function ChatPanel({
             )}
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {onGenerateTitle && (
               <button
                 type="button"
                 onClick={handleGenerateTitle}
                 disabled={isGeneratingTitle}
-                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2 sm:px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary disabled:opacity-50"
                 title="Generate smart conversation name with AI"
               >
                 {isGeneratingTitle ? (
@@ -258,7 +274,7 @@ export function ChatPanel({
               <button
                 type="button"
                 onClick={() => onDeleteSession(sessionId)}
-                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 sm:px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
                 title="Delete this conversation"
               >
                 <Trash2 className="size-3.5" />
@@ -267,10 +283,24 @@ export function ChatPanel({
             )}
           </div>
         </div>
+      ) : (
+        onToggleSidebar && (
+          <div className="flex items-center border-b border-border bg-sidebar/40 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onToggleSidebar}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <PanelLeft className="size-3.5 text-primary" />
+              <span>{sidebarOpen ? "Hide sidebar" : "Corpus & Conversations"}</span>
+            </Button>
+          </div>
+        )
       )}
 
-      <ScrollArea className="flex-1">
-        <div className="mx-auto w-full max-w-3xl space-y-6 px-6 py-8">
+      <ScrollArea className="flex-1 w-full min-w-0 max-w-full">
+        <div className="mx-auto w-full max-w-4xl space-y-4 sm:space-y-6 px-3 sm:px-6 py-4 sm:py-8 min-w-0 max-w-full">
           {isLoading && sessionId && (
             <div className="space-y-4">
               <Skeleton className="h-10 w-2/3" />
@@ -279,31 +309,30 @@ export function ChatPanel({
           )}
 
           {!isLoading && rendered.length === 0 && (
-            <div className="pt-16 text-center">
+            <div className="pt-12 sm:pt-16 text-center px-4">
               <div className="mx-auto flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/25">
                 <Quote className="size-5" />
               </div>
-              <h2 className="mt-4 font-display text-lg font-semibold">Ask your corpus</h2>
-              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                Every answer is drawn only from your indexed documents, with a numbered citation for
-                each claim. Retrieval runs hybrid dense + lexical search, fused with RRF, then
-                reranked with BGE v2 M3.
+              <h2 className="mt-4 font-display text-base sm:text-lg font-semibold">Ask your corpus</h2>
+              <p className="mx-auto mt-2 max-w-md text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Every answer is drawn strictly from your indexed documents, with a numbered citation for
+                each claim. Hybrid dense + lexical search, fused with RRF, then reranked with BGE.
               </p>
             </div>
           )}
 
           {rendered.map((message) =>
             message.role === "user" ? (
-              <div key={message.id} className="flex justify-end">
-                <div className="max-w-[80%] rounded-lg bg-primary px-4 py-2.5 text-sm text-primary-foreground">
+              <div key={message.id} className="flex justify-end min-w-0">
+                <div className="max-w-[85%] sm:max-w-[75%] rounded-lg bg-primary px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-primary-foreground leading-relaxed break-words">
                   {message.content}
                 </div>
               </div>
             ) : (
-              <div key={message.id} className="space-y-3">
+              <div key={message.id} className="space-y-2.5 sm:space-y-3 min-w-0 max-w-full overflow-hidden">
                 {message.streaming && !message.content ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="size-4 animate-spin" />
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                    <Loader2 className="size-4 animate-spin text-primary" />
                     Retrieving, reranking and grounding…
                   </div>
                 ) : (
@@ -315,13 +344,13 @@ export function ChatPanel({
                 )}
 
                 {message.citations.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
+                  <div className="flex flex-wrap gap-1 sm:gap-1.5 pt-1 min-w-0">
                     {message.citations.map((citation) => (
                       <button
                         key={`${message.id}-${citation.index}`}
                         type="button"
                         onClick={() => onCitationClick(citation)}
-                        className="flex max-w-[16rem] items-center gap-1.5 rounded-md border border-border bg-elevated/60 px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                        className="flex max-w-[13rem] sm:max-w-[16rem] items-center gap-1 rounded-md border border-border bg-elevated/60 px-1.5 sm:px-2 py-0.5 sm:py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground shrink-0"
                       >
                         <span className="citation-chip">{citation.index}</span>
                         <span className="truncate">
@@ -339,8 +368,8 @@ export function ChatPanel({
         </div>
       </ScrollArea>
 
-      <div className="border-t border-border bg-surface/60 p-4">
-        <div className="mx-auto flex w-full max-w-3xl items-end gap-2">
+      <div className="border-t border-border bg-surface/60 p-2 sm:p-4 w-full min-w-0 max-w-full">
+        <div className="mx-auto flex w-full max-w-4xl items-end gap-1.5 sm:gap-2 min-w-0 max-w-full">
           <Textarea
             ref={textareaRef}
             value={input}
@@ -354,7 +383,7 @@ export function ChatPanel({
             }}
             rows={2}
             placeholder="Ask a question grounded in your documents…"
-            className="min-h-[3.5rem] resize-none bg-background"
+            className="min-h-[2.75rem] sm:min-h-[3.5rem] resize-none bg-background text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-2"
           />
           {streaming ? (
             <Button
@@ -362,11 +391,17 @@ export function ChatPanel({
               size="icon"
               onClick={() => abortRef.current?.abort()}
               aria-label="Stop"
+              className="size-9 sm:size-10 shrink-0"
             >
               <Square className="size-4" />
             </Button>
           ) : (
-            <Button size="icon" onClick={() => void send()} disabled={!input.trim() || !sessionId}>
+            <Button
+              size="icon"
+              onClick={() => void send()}
+              disabled={!input.trim() || !sessionId}
+              className="size-9 sm:size-10 shrink-0"
+            >
               <ArrowUp className="size-4" />
             </Button>
           )}
@@ -374,4 +409,5 @@ export function ChatPanel({
       </div>
     </div>
   );
+
 }
