@@ -1,0 +1,19 @@
+# Root Docker Ignore
+.env
+.env.*
+!.env.example
+frontend/
+node_modules/
+.output/
+.vercel/
+knowledge-base/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git/
+.gitignore
+.vscode/
+.idea/

@@ -3,6 +3,7 @@ import { getUsersCollection, MongoUser } from "./db";
 
 const JWT_SECRET =
   process.env["JWT_SECRET"] ||
+  process.env["AUTH_SECRET"] ||
   process.env["SUPABASE_PUBLISHABLE_KEY"] ||
   "atlas-rag-secret-token-key-2026-auth";
 

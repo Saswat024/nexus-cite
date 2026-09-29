@@ -23,7 +23,6 @@ High-performance Python RAG microservice supporting hybrid dense and lexical sea
    ```env
    GROQ_API_KEY=your_groq_api_key
    HUGGINGFACE_API_KEY=your_hf_token
-   HF_TOKEN=your_hf_token
    QDRANT_URL=your_qdrant_url
    QDRANT_API_KEY=your_qdrant_api_key
    MONGODB_URI=your_mongodb_atlas_uri

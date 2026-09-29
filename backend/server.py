@@ -68,6 +68,16 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+async def root():
+    return {
+        "status": "ok",
+        "service": "Nexus Cite RAG Microservice",
+        "version": "1.0.0",
+        "docs": "/docs",
+    }
+
+
 @app.get("/health")
 async def health_check():
     return {
@@ -75,6 +85,7 @@ async def health_check():
         "has_qdrant_url": bool(os.environ.get("QDRANT_URL")),
         "has_groq_key": bool(os.environ.get("GROQ_API_KEY")),
         "has_hf_key": bool(os.environ.get("HUGGINGFACE_API_KEY")),
+        "has_mongo_uri": bool(os.environ.get("MONGODB_URI")),
     }
 
 

@@ -33,9 +33,9 @@ class SparseVector(TypedDict):
 
 
 def _get_api_key() -> str:
-    key = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_API_KEY")
+    key = os.environ.get("HUGGINGFACE_API_KEY")
     if not key:
-        raise ValueError("Missing HF_TOKEN or HUGGINGFACE_API_KEY in environment")
+        raise ValueError("Missing HUGGINGFACE_API_KEY in environment")
     return key
 
 
