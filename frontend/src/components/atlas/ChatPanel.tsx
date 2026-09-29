@@ -77,7 +77,7 @@ export function ChatPanel({
   });
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages, pending, userEcho]);
 
   useEffect(() => {
@@ -184,9 +184,9 @@ export function ChatPanel({
   ];
 
   return (
-    <div className="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden">
+    <div className="flex h-full max-h-full w-full min-w-0 max-w-full flex-col overflow-hidden">
       {sessionId ? (
-        <div className="flex w-full min-w-0 max-w-full items-center justify-between border-b border-border bg-sidebar/40 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-sm gap-2">
+        <div className="sticky top-0 z-20 shrink-0 flex w-full min-w-0 max-w-full items-center justify-between border-b border-border bg-sidebar/95 px-3 sm:px-6 py-2.5 sm:py-2.5 backdrop-blur-md gap-2 shadow-xs">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 overflow-hidden">
             {onToggleSidebar && (
               <Button
@@ -285,7 +285,7 @@ export function ChatPanel({
         </div>
       ) : (
         onToggleSidebar && (
-          <div className="flex items-center border-b border-border bg-sidebar/40 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-sm">
+          <div className="sticky top-0 z-20 shrink-0 flex items-center border-b border-border bg-sidebar/95 px-3 sm:px-6 py-2.5 sm:py-2.5 backdrop-blur-md shadow-xs">
             <Button
               variant="outline"
               size="sm"
@@ -299,7 +299,7 @@ export function ChatPanel({
         )
       )}
 
-      <ScrollArea className="flex-1 w-full min-w-0 max-w-full">
+      <ScrollArea className="flex-1 min-h-0 w-full min-w-0 max-w-full">
         <div className="mx-auto w-full max-w-4xl space-y-4 sm:space-y-6 px-3 sm:px-6 py-4 sm:py-8 min-w-0 max-w-full">
           {isLoading && sessionId && (
             <div className="space-y-4">
@@ -368,7 +368,7 @@ export function ChatPanel({
         </div>
       </ScrollArea>
 
-      <div className="border-t border-border bg-surface/60 p-2 sm:p-4 w-full min-w-0 max-w-full">
+      <div className="shrink-0 border-t border-border bg-surface/80 p-2 sm:p-4 w-full min-w-0 max-w-full backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-4xl items-end gap-1.5 sm:gap-2 min-w-0 max-w-full">
           <Textarea
             ref={textareaRef}

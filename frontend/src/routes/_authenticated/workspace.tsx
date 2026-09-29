@@ -186,7 +186,7 @@ function Workspace() {
   const currentSession = sessions?.find((s) => s.id === sessionId);
 
   return (
-    <div className="relative flex h-screen w-full max-w-full min-w-0 overflow-hidden">
+    <div className="relative flex h-screen h-[100dvh] max-h-[100dvh] w-full max-w-full min-w-0 overflow-hidden">
       {/* Mobile / Tablet overlay backdrop */}
       {sidebarOpen && (
         <div
@@ -361,7 +361,7 @@ function Workspace() {
         </div>
       </aside>
 
-      <main className="flex min-w-0 max-w-full w-full flex-1 flex-col overflow-hidden">
+      <main className="flex min-w-0 max-w-full w-full flex-1 flex-col overflow-hidden h-full min-h-0">
         <ChatPanel
           sessionId={sessionId}
           sessionTitle={currentSession?.title ?? null}
