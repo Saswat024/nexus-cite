@@ -91,9 +91,11 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-primary/15 text-primary ring-1 ring-primary/30">
-            <Library className="size-5" />
-          </div>
+          <img
+            src="/favicon.png"
+            alt="Atlas"
+            className="size-10 rounded-lg object-contain ring-1 ring-border shadow-xs"
+          />
           <div>
             <h1 className="font-display text-lg font-semibold">Atlas</h1>
             <p className="text-xs text-muted-foreground">Grounded research over your corpus</p>

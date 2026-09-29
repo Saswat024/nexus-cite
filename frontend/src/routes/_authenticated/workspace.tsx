@@ -204,9 +204,11 @@ function Workspace() {
         }`}
       >
         <div className="flex items-center gap-2.5 border-b border-border px-4 py-3.5">
-          <div className="flex size-8 items-center justify-center rounded-md bg-primary/15 text-primary ring-1 ring-primary/30">
-            <Library className="size-4" />
-          </div>
+          <img
+            src="/favicon.png"
+            alt="Atlas"
+            className="size-8 rounded-md object-contain ring-1 ring-border shadow-xs"
+          />
           <div className="min-w-0 flex-1">
             <p className="font-display text-sm font-semibold">Atlas</p>
             <p className="truncate text-[11px] text-muted-foreground">Grounded research console</p>
