@@ -90,6 +90,30 @@ export async function deleteDocumentAndFile(documentId: string): Promise<void> {
   await chunksCol.deleteMany({ document_id: documentId });
 }
 
+export async function deleteAllDocumentsForUser(userId: string): Promise<{ deletedCount: number }> {
+  const col = await getDocumentsCollection();
+  const docs = await col.find({ uploaded_by: userId }).toArray();
+
+  for (const doc of docs) {
+    if (doc.gridfs_file_id) {
+      try {
+        await deleteFileFromGridFS(doc.gridfs_file_id);
+      } catch (err) {
+        console.warn(`Could not delete GridFS file ${doc.gridfs_file_id}:`, err);
+      }
+    }
+  }
+
+  const docIds = docs.map((d) => d.id);
+  if (docIds.length > 0) {
+    const chunksCol = await getDocumentChunksCollection();
+    await chunksCol.deleteMany({ document_id: { $in: docIds } });
+    await col.deleteMany({ uploaded_by: userId });
+  }
+
+  return { deletedCount: docs.length };
+}
+
 export async function getDocumentFileBuffer(documentId: string): Promise<{ buffer: Buffer; filename: string }> {
   const doc = await getDocumentById(documentId);
   if (!doc || !doc.gridfs_file_id) {

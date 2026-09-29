@@ -63,48 +63,85 @@
 :root {
   --radius: 0.5rem;
 
-  --background: oklch(0.17 0.014 258);
-  --foreground: oklch(0.95 0.005 260);
-  --surface: oklch(0.21 0.015 258);
-  --surface-foreground: oklch(0.95 0.005 260);
-  --elevated: oklch(0.25 0.016 258);
-  --card: oklch(0.21 0.015 258);
-  --card-foreground: oklch(0.95 0.005 260);
-  --popover: oklch(0.22 0.015 258);
-  --popover-foreground: oklch(0.95 0.005 260);
+  /* ========================================================
+   * 60% Neutral Background Space
+   * #212121 Charcoal-Onyx Canvas & Deep Sidebar
+   * ======================================================== */
+  --background: #212121;
+  --surface: #2B2B2B;
+  --elevated: #333333;
+  --sidebar: #191919;
 
+  /* ========================================================
+   * 30% Secondary Structure (Cards, Typography, Borders)
+   * High contrast (>= 4.5:1 WCAG AA) with charcoal borders
+   * ======================================================== */
+  --card: #2B2B2B;
+  --card-foreground: #F5F5F5;
+  --popover: #2B2B2B;
+  --popover-foreground: #F5F5F5;
+
+  --surface-foreground: #F5F5F5;
+  --foreground: #F5F5F5; /* Crisp contrast 14.8:1 against #212121 (WCAG AAA) */
+
+  --secondary: #333333;
+  --secondary-foreground: #EEEEEE;
+
+  --muted: #2B2B2B;
+  --muted-foreground: #A0A0A0; /* Contrast 6.0:1 against #212121 (WCAG AA >= 4.5:1) */
+
+  /* Neutral Dark Borders / Dividers */
+  --border: #383838;
+  --input: #383838;
+  --sidebar-border: #2D2D2D;
+
+  /* Sidebar Tokens */
+  --sidebar-foreground: #E0E0E0;
+  --sidebar-accent: #2B2B2B;
+  --sidebar-accent-foreground: #F5F5F5;
+  --sidebar-primary: oklch(0.78 0.13 187);
+  --sidebar-primary-foreground: #212121;
+  --sidebar-ring: oklch(0.78 0.13 187 / 60%);
+
+  /* ========================================================
+   * 10% Accent Color (Strictly for Primary CTAs & Highlights)
+   * Luminous Electric Cyan / Mint
+   * ======================================================== */
   --primary: oklch(0.78 0.13 187);
-  --primary-foreground: oklch(0.18 0.02 220);
-  --secondary: oklch(0.27 0.017 258);
-  --secondary-foreground: oklch(0.93 0.005 260);
-  --muted: oklch(0.25 0.014 258);
-  --muted-foreground: oklch(0.69 0.015 258);
-  --accent: oklch(0.72 0.14 62);
-  --accent-foreground: oklch(0.18 0.02 60);
-  --destructive: oklch(0.63 0.2 24);
-  --destructive-foreground: oklch(0.97 0.01 20);
-  --success: oklch(0.72 0.15 155);
-  --success-foreground: oklch(0.18 0.03 155);
-  --warning: oklch(0.79 0.14 78);
-  --warning-foreground: oklch(0.2 0.03 78);
-
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 12%);
+  --primary-foreground: #212121; /* High contrast on primary button */
   --ring: oklch(0.78 0.13 187 / 60%);
 
-  --sidebar: oklch(0.19 0.014 258);
-  --sidebar-foreground: oklch(0.93 0.005 260);
-  --sidebar-primary: oklch(0.78 0.13 187);
-  --sidebar-primary-foreground: oklch(0.18 0.02 220);
-  --sidebar-accent: oklch(0.25 0.016 258);
-  --sidebar-accent-foreground: oklch(0.95 0.005 260);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.78 0.13 187 / 60%);
+  /* Status Colors */
+  --accent: #333333;
+  --accent-foreground: #F5F5F5;
+
+  --destructive: #F87171;
+  --destructive-foreground: #212121;
+  --success: #34D399;
+  --success-foreground: #212121;
+  --warning: #FBBF24;
+  --warning-foreground: #212121;
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
+  }
+
+  /* Prevent browser yellow/cyan autofill overlay from breaking dark theme */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  textarea:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--color-foreground) !important;
+    -webkit-box-shadow: 0 0 0 1000px #2B2B2B inset !important;
+    box-shadow: 0 0 0 1000px #2B2B2B inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+    border-color: #383838 !important;
   }
 
   html {
@@ -123,7 +160,7 @@
     -webkit-font-smoothing: antialiased;
     background-image: radial-gradient(
       circle at 15% -10%,
-      oklch(0.78 0.13 187 / 8%),
+      oklch(0.78 0.13 187 / 6%),
       transparent 55%
     );
     background-attachment: fixed;
@@ -174,6 +211,7 @@
 [data-radix-scroll-area-viewport] {
   width: 100% !important;
   max-width: 100% !important;
+  overscroll-behavior: contain;
 }
 
 [data-radix-scroll-area-viewport] > div {

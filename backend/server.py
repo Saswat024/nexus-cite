@@ -37,6 +37,7 @@ from embeddings import embed_texts_async, embed_query_async, sparse_vector
 from qdrant import (
     upsert_chunks_async,
     delete_by_document_async,
+    delete_by_user_async,
     hybrid_search_async,
     UpsertPoint,
     QdrantPayload,
@@ -231,6 +232,13 @@ async def api_delete_document(document_id: str):
     """Delete all vectors and payload for a document from Qdrant."""
     await delete_by_document_async(document_id)
     return {"ok": True, "deleted": document_id}
+
+
+@app.delete("/api/rag/documents/user/{user_id}")
+async def api_delete_user_documents(user_id: str):
+    """Delete all vectors and payload for all documents belonging to a user from Qdrant."""
+    await delete_by_user_async(user_id)
+    return {"ok": True, "deleted_user": user_id}
 
 
 class ChatRequest(BaseModel):

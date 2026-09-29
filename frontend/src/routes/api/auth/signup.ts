@@ -34,7 +34,16 @@ export const Route = createFileRoute("/api/auth/signup")({
             200
           );
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : "Failed to register account";
+          let message = err instanceof Error ? err.message : "Failed to register account";
+          if (
+            message.includes("SSL alert number 80") ||
+            message.includes("tlsv1 alert") ||
+            message.includes("ServerSelection") ||
+            message.includes("ETIMEDOUT")
+          ) {
+            message =
+              "MongoDB Atlas connection rejected: Your current IP address is not whitelisted in MongoDB Atlas. Please go to MongoDB Atlas > Network Access and add your IP address (or allow 0.0.0.0/0).";
+          }
           return json({ error: message }, 400);
         }
       },

@@ -258,6 +258,34 @@ def delete_by_document(document_id: str) -> None:
     )
 
 
+async def delete_by_user_async(user_id: str) -> None:
+    """Delete all points associated with a user_id (Async)."""
+    await ensure_collection_async()
+    await qdrant_request_async(
+        f"/collections/{COLLECTION}/points/delete?wait=true",
+        method="POST",
+        json_body={
+            "filter": {
+                "must": [{"key": "user_id", "match": {"value": user_id}}]
+            }
+        },
+    )
+
+
+def delete_by_user(user_id: str) -> None:
+    """Delete all points associated with a user_id (Sync)."""
+    ensure_collection()
+    qdrant_request(
+        f"/collections/{COLLECTION}/points/delete?wait=true",
+        method="POST",
+        json_body={
+            "filter": {
+                "must": [{"key": "user_id", "match": {"value": user_id}}]
+            }
+        },
+    )
+
+
 async def hybrid_search_async(
     dense_vector: list[float],
     query_text: str,

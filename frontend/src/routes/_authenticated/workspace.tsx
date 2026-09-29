@@ -240,22 +240,31 @@ function Workspace() {
                 prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
               )
             }
+            onClearSelection={() => setSelectedDocs([])}
           />
         </div>
 
-        <div className="max-h-64 border-t border-border">
-          <div className="flex items-center justify-between px-4 py-2.5">
-            <h2 className="font-display text-sm font-semibold">Conversations</h2>
+        <div className="flex flex-col shrink-0 border-t border-border max-h-72 sm:max-h-80">
+          <div className="flex items-center justify-between px-4 py-2.5 shrink-0">
+            <div className="flex items-center gap-1.5">
+              <h2 className="font-display text-sm font-semibold">Conversations</h2>
+              {sessions && sessions.length > 0 && (
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  ({sessions.length})
+                </span>
+              )}
+            </div>
             <button
               type="button"
               aria-label="New conversation"
               onClick={() => void createSession()}
-              className="rounded p-1 text-muted-foreground hover:text-primary transition-colors"
+              className="rounded p-1 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+              title="New conversation"
             >
               <MessageSquarePlus className="size-4" />
             </button>
           </div>
-          <ScrollArea className="max-h-44">
+          <ScrollArea className="max-h-56 sm:max-h-64 w-full">
             <div className="space-y-1 px-3 pb-3">
               {isLoading && <Skeleton className="h-8 w-full" />}
               {sessions?.map((session) => (

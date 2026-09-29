@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { registerUser, loginUser, verifyToken, getUserById } from "@/integrations/mongodb/auth.server";
 
 export const signUpFn = createServerFn({ method: "POST" })
-  .inputValidator((input: { email: string; password: string }) => {
+  .validator((input: { email: string; password: string }) => {
     if (!input?.email || !input?.password) {
       throw new Error("Email and password are required.");
     }
@@ -21,7 +21,7 @@ export const signUpFn = createServerFn({ method: "POST" })
   });
 
 export const signInFn = createServerFn({ method: "POST" })
-  .inputValidator((input: { email: string; password: string }) => {
+  .validator((input: { email: string; password: string }) => {
     if (!input?.email || !input?.password) {
       throw new Error("Email and password are required.");
     }
@@ -40,7 +40,7 @@ export const signInFn = createServerFn({ method: "POST" })
   });
 
 export const verifySessionFn = createServerFn({ method: "POST" })
-  .inputValidator((input: { token: string }) => input)
+  .validator((input: { token: string }) => input)
   .handler(async ({ data }) => {
     if (!data?.token) return { user: null };
     const payload = verifyToken(data.token);

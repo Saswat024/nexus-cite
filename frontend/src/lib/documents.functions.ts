@@ -5,6 +5,7 @@ import {
   getUserDocuments,
   updateDocumentStatus,
   deleteDocumentAndFile,
+  deleteAllDocumentsForUser,
   getDocumentFileBuffer,
   replaceDocumentChunks,
   MongoDocument,
@@ -12,6 +13,7 @@ import {
 import {
   ingestDocumentInPython,
   deleteDocumentInPython,
+  deleteAllUserDocumentsInPython,
 } from "./rag/client";
 
 /**
@@ -19,7 +21,7 @@ import {
  */
 export const uploadAndIngestDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(
+  .validator(
     (input: {
       filename: string;
       fileBase64: string;
@@ -104,7 +106,7 @@ export const uploadAndIngestDocument = createServerFn({ method: "POST" })
  */
 export const ingestDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { documentId: string }) => {
+  .validator((input: { documentId: string }) => {
     if (!input?.documentId) throw new Error("documentId is required");
     return input;
   })
@@ -175,11 +177,30 @@ export const getDocuments = createServerFn({ method: "GET" })
  */
 export const deleteDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { documentId: string }) => input)
+  .validator((input: { documentId: string }) => input)
   .handler(async ({ data }) => {
     // 1. Delete vectors from Qdrant
     await deleteDocumentInPython(data.documentId);
     // 2. Delete file from GridFS and metadata from MongoDB
     await deleteDocumentAndFile(data.documentId);
     return { ok: true };
+  });
+
+/**
+ * Removes all documents, their GridFS files, MongoDB chunks, and Qdrant vectors for the authenticated user.
+ */
+export const deleteAllDocuments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const docs = await getUserDocuments(userId);
+    const docIds = docs.map((d) => d.id);
+
+    // 1. Delete vectors from Qdrant
+    await deleteAllUserDocumentsInPython(userId, docIds);
+
+    // 2. Delete files from GridFS, chunks, and metadata from MongoDB
+    const result = await deleteAllDocumentsForUser(userId);
+
+    return { ok: true, deletedCount: result.deletedCount };
   });

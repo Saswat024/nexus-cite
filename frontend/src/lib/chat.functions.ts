@@ -30,7 +30,7 @@ export const getSessions = createServerFn({ method: "GET" })
  */
 export const createSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input?: { title?: string }) => input || {})
+  .validator((input?: { title?: string }) => input || {})
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const session = await createChatSession(userId, data.title || "New conversation");
@@ -46,7 +46,7 @@ export const createSession = createServerFn({ method: "POST" })
  */
 export const deleteSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { sessionId: string }) => {
+  .validator((input: { sessionId: string }) => {
     if (!input?.sessionId) throw new Error("sessionId is required");
     return input;
   })
@@ -61,7 +61,7 @@ export const deleteSession = createServerFn({ method: "POST" })
  */
 export const updateSessionTitleFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { sessionId: string; title: string }) => {
+  .validator((input: { sessionId: string; title: string }) => {
     if (!input?.sessionId) throw new Error("sessionId is required");
     if (!input?.title?.trim()) throw new Error("title cannot be empty");
     return input;
@@ -77,7 +77,7 @@ export const updateSessionTitleFn = createServerFn({ method: "POST" })
  */
 export const generateSessionTitleFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { sessionId: string; query?: string }) => {
+  .validator((input: { sessionId: string; query?: string }) => {
     if (!input?.sessionId) throw new Error("sessionId is required");
     return input;
   })
@@ -109,7 +109,7 @@ export const generateSessionTitleFn = createServerFn({ method: "POST" })
  */
 export const getSessionMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { sessionId: string }) => {
+  .validator((input: { sessionId: string }) => {
     if (!input?.sessionId) throw new Error("sessionId is required");
     return input;
   })

@@ -5,11 +5,23 @@ import {
   getDocuments,
   uploadAndIngestDocument,
   deleteDocument,
+  deleteAllDocuments,
 } from "@/lib/documents.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   Upload,
@@ -35,10 +47,12 @@ type DocumentRow = {
 export function DocumentLibrary({
   selectedIds,
   onToggleSelect,
+  onClearSelection,
   highlightedId,
 }: {
   selectedIds: string[];
   onToggleSelect: (id: string) => void;
+  onClearSelection?: () => void;
   highlightedId: string | null;
 }) {
   const queryClient = useQueryClient();
@@ -50,10 +64,12 @@ export function DocumentLibrary({
     currentName: string;
   } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const fetchDocs = useServerFn(getDocuments);
   const uploadAndIngest = useServerFn(uploadAndIngestDocument);
   const remove = useServerFn(deleteDocument);
+  const removeAll = useServerFn(deleteAllDocuments);
 
   const { data: documents, isLoading } = useQuery({
     queryKey: ["documents"],
@@ -72,6 +88,24 @@ export function DocumentLibrary({
       toast.success("Document removed");
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Delete failed"),
+  });
+
+  const deleteAllMutation = useMutation({
+    mutationFn: async () => removeAll(),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      onClearSelection?.();
+      setIsDeleteDialogOpen(false);
+      const count = res?.deletedCount ?? 0;
+      toast.success(
+        count > 0
+          ? `Deleted all ${count} document${count > 1 ? "s" : ""}`
+          : "All documents removed"
+      );
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to delete all documents");
+    },
   });
 
   const handleUploadFiles = async (files: FileList | File[]) => {
@@ -180,9 +214,63 @@ export function DocumentLibrary({
       >
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-display text-sm font-semibold">Corpus</h2>
-          <span className="font-mono text-[11px] text-muted-foreground">
-            {documents?.length ?? 0} docs
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[11px] text-muted-foreground">
+              {documents?.length ?? 0} docs
+            </span>
+
+            {documents && documents.length > 0 && (
+              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-1.5 text-[11px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1 transition-colors"
+                    title="Delete all uploaded documents"
+                    disabled={deleteAllMutation.isPending || uploading}
+                  >
+                    <Trash2 className="size-3 text-destructive/80" />
+                    <span>Delete all</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                      <AlertTriangle className="size-5" />
+                      Delete all {documents.length} document{documents.length > 1 ? "s" : ""}?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-sm">
+                      This will permanently remove all <strong>{documents.length}</strong> uploaded files from MongoDB GridFS, clear their extracted chunks, and wipe all vector embeddings from Qdrant.
+                      <br /><br />
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleteAllMutation.isPending}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e) => {
+                        e.preventDefault();
+                        deleteAllMutation.mutate();
+                      }}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      disabled={deleteAllMutation.isPending}
+                    >
+                      {deleteAllMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                          Deleting all...
+                        </>
+                      ) : (
+                        "Yes, delete all"
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </div>
 
         <input
@@ -230,10 +318,21 @@ export function DocumentLibrary({
         )}
 
         {selectedIds.length > 0 && (
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Retrieval scoped to {selectedIds.length} selected document
-            {selectedIds.length > 1 ? "s" : ""}.
-          </p>
+          <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>
+              Retrieval scoped to {selectedIds.length} selected document
+              {selectedIds.length > 1 ? "s" : ""}.
+            </span>
+            {onClearSelection && (
+              <button
+                type="button"
+                onClick={onClearSelection}
+                className="text-primary hover:underline ml-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         )}
       </div>
 

@@ -80,6 +80,25 @@ export async function deleteDocumentInPython(documentId: string): Promise<void> 
   }
 }
 
+export async function deleteAllUserDocumentsInPython(userId: string, documentIds?: string[]): Promise<void> {
+  let endpointSucceeded = false;
+  try {
+    const res = await fetch(`${PYTHON_RAG_URL}/api/rag/documents/user/${userId}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      endpointSucceeded = true;
+    }
+  } catch (err) {
+    console.warn(`Could not reach Python RAG service user delete endpoint: ${err}`);
+  }
+
+  // If user-level endpoint failed or is not available, delete per-document
+  if (!endpointSucceeded && documentIds && documentIds.length > 0) {
+    await Promise.allSettled(documentIds.map((id) => deleteDocumentInPython(id)));
+  }
+}
+
 export async function streamChatInPython(args: {
   sessionId: string;
   question: string;
