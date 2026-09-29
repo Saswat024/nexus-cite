@@ -1,98 +1,75 @@
-# Research Compass
+# Nexus Cite — Web Application (Frontend)
 
-I'm building a production-grade RAG research assistant — chat over a large corpus
+Production-grade research console built with TanStack Start, React 19, and Vite. Connects directly to MongoDB Atlas for state and session storage, and interfaces with the Python RAG Engine for document indexing and grounded generation.
 
-(research papers / course material) with grounded, cited answers. Build it to this
+---
 
-spec exactly; this needs to read as production infrastructure, not a PDF-chatbot demo.
+## Tech Stack
 
-## Stack
+- **Framework**: TanStack Start (SSR / Server Functions) + TanStack Router
+- **UI & State**: React 19, TanStack Query (`@tanstack/react-query`), Lucide Icons
+- **Styling**: Tailwind CSS v4, Radix UI primitives, shadcn/ui components
+- **Build & Nitro**: Vite + Nitro (configured with `preset: "vercel"`)
+- **Database & Auth**: Native MongoDB Atlas driver (`mongodb`), PBKDF2 password hashing, JWT sessions
 
-- Frontend: React 19 + TanStack Start + Vite + TypeScript + Tailwind + shadcn/ui
+---
 
-- Storage & Database: MongoDB Atlas
-  - Raw document files (PDF/DOCX) stored in MongoDB GridFS (`documents_fs` bucket)
-  - Collections for `documents`, `document_chunks`, `chat_sessions`, `messages`, and `citations`
+## Features
 
-- Core RAG Engine (Python): FastAPI microservice (`src/lib/rag`)
-  - PDF/DOCX parsing preserving page numbers and section boundaries
-  - Section-aware chunking and prompt-injection defense
-  - Dense embeddings via Hugging Face (`sentence-transformers/all-MiniLM-L6-v2`) + BM25 lexical sparse vectors
-  - Hybrid retrieval on Qdrant Cloud with native RRF fusion
-  - Cross-encoder reranking with BAAI BGE Reranker v2 M3
-  - Grounded SSE streaming completions on Groq (`openai/gpt-oss-120b`)
+- **Document Library**: Drag-and-drop document upload (PDF, DOCX) directly into MongoDB GridFS, status indicators, and full batch deletion ("Delete All Documents").
+- **Grounded Research Chat**: Interactive chat interface with inline citation badges (`[1]`, `[2]`).
+- **Source Inspection Sheet**: Clicking any citation opens a slide-over panel displaying the exact retrieved document chunk, similarity score, page number, and section heading.
+- **Session Management**: File-based conversation switching, automatic LLM-powered title generation, and title renaming.
+- **Custom Branding**: Branded favicon assets (`favicon.ico`, `favicon.png`, `apple-touch-icon.png`) and in-app logo.
 
-## Flow 1 — Ingestion
+---
 
-1. User uploads a PDF/DOCX from the sidebar → stored directly in MongoDB GridFS
-2. Python RAG Engine parses the document preserving page numbers and headings
-3. Splits into section-aware chunks and sanitizes instruction-like text
-4. Embeds each chunk (dense + lexical sparse) and upserts points into Qdrant Cloud
-5. Persists matching chunk records to MongoDB `document_chunks` and flips document status to "ready"
+## Local Development
 
-2. An Edge Function parses it, preserving page numbers and section headers, and
+### 1. Install Dependencies
+```bash
+npm install
+```
 
-   splits it into chunks along natural section boundaries — not blind fixed-size
+### 2. Configure Environment Variables
+Create `.env` in this directory:
+```env
+# MongoDB Atlas Connection
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+MONGODB_DB_NAME=nexus_cite
 
-   windows
+# JWT Secret for Session Authentication
+JWT_SECRET=your_secure_jwt_secret_key_here
 
-3. Embeds each chunk, upserts into Qdrant with payload {document_id, chunk_id,
+# Python Backend Service URL
+PYTHON_RAG_URL=http://127.0.0.1:8000
+```
 
-   page_number, section_heading}, inserts a matching row into document_chunks
-
-4. Flips documents.status to "ready"; UI shows a processing indicator until then
-
-## Flow 2 — Query
-
-1. User asks a question in the chat panel
-
-2. Edge Function: embeds the query → Qdrant hybrid search with RRF fusion,
-
-   top ~20 → Cohere rerank → keep top 5
-
-3. Builds a context block from those 5 chunks, each tagged with a citation index
-
-4. Calls the generation model with a strict system prompt: answer ONLY from the
-
-   given context, cite every claim as [1] [2] etc., and if the context doesn't
-
-   support an answer, say so explicitly instead of filling the gap from general
-
-   knowledge
-
-5. Streams the response back; stores the assistant message and citation rows
-
-## UI
-
-- Left sidebar: document library — upload button, list with status badges
-
-- Main panel: chat interface; citations render as inline numbered chips; clicking
-
-  one opens a side panel showing the exact source chunk highlighted, with a
-
-  jump-to-document link
-
-- Clean modern SaaS look, dark mode, loading skeletons during ingestion/streaming
-
-## Security
-
-- RLS so a user only ever sees their own documents and chats
-
-- Sanitize/flag any instruction-like text found inside ingested documents before
-
-  it reaches the context window (basic prompt-injection defense on ingestion)
-
-Start with the schema, the ingestion Edge Function, and the query Edge Function,
-
-then wire the chat UI to real data. Ask me for each secret as you need it.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+### 3. Start Development Server
+```bash
 npm run dev
 ```
+Visit `http://localhost:8080/` in your browser.
+
+### 4. Build for Production
+```bash
+npm run build
+```
+Generates `.vercel/output` using Nitro's Vercel preset for serverless deployment.
+
+---
+
+## Vercel Deployment
+
+1. Connect your repository on [vercel.com](https://vercel.com).
+2. Configure project settings:
+   - **Root Directory**: `frontend`
+   - **Framework Preset**: `Other` (or `Vite`)
+   - **Build Command**: `npm run build`
+   - **Output Directory**: (leave empty / auto-detected `.vercel/output`)
+3. Set environment variables:
+   - `PYTHON_RAG_URL`: URL of your deployed Python backend (e.g. `https://nexus-cite-backend.onrender.com`)
+   - `MONGODB_URI`: MongoDB Atlas connection string
+   - `MONGODB_DB_NAME`: `nexus_cite`
+   - `JWT_SECRET`: Random 32+ character string
+4. Click **Deploy**.

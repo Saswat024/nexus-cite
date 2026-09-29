@@ -1,4 +1,7 @@
 import "./lib/error-capture";
+import "./lib/auth.functions";
+import "./lib/chat.functions";
+import "./lib/documents.functions";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
