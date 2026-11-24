@@ -14,13 +14,13 @@ from typing import TypedDict
 import numpy as np
 from huggingface_hub import InferenceClient, AsyncInferenceClient
 
-# HF_MODEL = "Qwen/Qwen3-Embedding-8B"
-# HF_PROVIDER = "scaleway"
-# DENSE_DIM = 4096
+HF_MODEL = "Qwen/Qwen3-Embedding-8B"
+HF_PROVIDER = "scaleway"
+DENSE_DIM = 4096
 
-HF_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-HF_PROVIDER = None
-DENSE_DIM = 384
+# HF_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+# HF_PROVIDER = None
+# DENSE_DIM = 384
 
 STOPWORDS = set(
     "a an the and or of to in for on with is are was were be been by as at from that this it its we our you your they their he she i not no".split()
